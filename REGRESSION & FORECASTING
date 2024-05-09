@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import statsmodels.api as sm
+
+
+#Read the file (Skyworth_result.csv)
+df = pd.read_csv('Skyworth_result.csv')
+print(df.head(50))
+
+
+#Remove labels from the dataset (videoId, title) by creating new dataframe
+df2 = df.drop(columns=['title', 'videoId'])
+print(df2.head(50))
+
+
+#Summary statistics
+print(df2.describe().round(decimals=0))
+
+
+print(df2.corr())
+
+
+plt.scatter(df2.viewCount, df2.likeCount)
+plt.show()
+
+
+#Predict using LR (y=like, x=view count)
+y = df2.likeCount
+X = df2.viewCount
+X = sm.add_constant(X)
+
+
+#likeCount = -1834.6133 + 0.0247(X) + slope
+lr_model = sm.OLS(y, X).fit()
+print(lr_model.summary())
+
+
+#generate predicted values
+X_prime = np.linspace(X.viewCount.min(), X.viewCount.max(), 100)
+X_prime = sm.add_constant(X_prime)
+
+
+y_predict = lr_model.predict(X_prime).round(decimals=0) #prediction line
+print(y_predict)
+
+
+#Visualize the prediction
+plt.scatter(X.viewCount, y)
+plt.xlabel('View Count')
+plt.ylabel('Likes')
+plt.plot(X_prime[:,1], y_predict, color='red', linestyle='dotted')
+plt.show()
+
+
+#Generate interactive graph using plotly module
+y_predict = lr_model.predict(X_prime).round(decimals=0)
+fig = px.scatter(df2, x='viewCount', y=y)
+fig.add_scatter(x=X_prime[:,1], y=y_predict, mode='lines', line=dict(color='red'))
+fig.show()
+
+
+#Analysis: As viewCount increases, likeCount increases.
